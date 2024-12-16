@@ -1,10 +1,13 @@
 import React, {useEffect, useState} from "react";
-import { View, Text, StyleSheet, FlatList, StatusBar } from "react-native";
+import { View, Text, StyleSheet, FlatList, StatusBar, TextInput, TouchableOpacity, TouchableWithoutFeedback} from "react-native";
 import UserCard from "../components/userCard";
 import User from "../../assets/interface/userInterface";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const Home = () => {
     const [users, setUsers] = useState<User[]>([]);
+    const [originalUsers, setOriginalUsers] = useState<User[]>([]);
+    const [showPopUp, setShowPopUp] = useState(false);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -14,15 +17,63 @@ const Home = () => {
                 data[i].profileImage = `https://i.pravatar.cc/150?img=${i + 1}`;
             });
             setUsers(data);
+            setOriginalUsers(data);
         }
         fetchUsers();
     }, [])
+
+    const handleSearch = (value: string) => {
+        if (value.length > 1) {
+            const filteredUsers = originalUsers.filter((user) => {
+                return user.name.toLowerCase().includes(value.toLowerCase());
+            });
+            setUsers(filteredUsers);
+        } else {
+            setUsers(originalUsers);
+        }
+    }
+
+    const handleFilter = (key: keyof User) => {
+        const sortedUsers = users.sort((a, b) => {
+            if (a[key] < b[key]) {
+                return -1;
+            }
+            if (a[key] > b[key]) {
+                return 1;
+            }
+            return 0;
+        });
+        setUsers([...sortedUsers]);
+        setShowPopUp(() => !showPopUp);
+    }
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
             <View style={styles.header}>
                 <Text style={styles.headerText}>User Directory</Text>
+            </View>
+            <View style={styles.actionsContainer}>
+                <View style={styles.searchContainer}>
+                    <TextInput
+                        placeholder="Search users..."
+                        style={styles.searchInput}
+                        onChangeText={handleSearch}
+                    />
+                </View>
+                <TouchableWithoutFeedback onPress={() => setShowPopUp(!showPopUp)}>
+                    <FontAwesome name="sort" size={24} color="black" />
+                </TouchableWithoutFeedback>
+                {showPopUp && (
+                        <View style={styles.popUp}>
+                        <TouchableOpacity onPress={() => handleFilter('name')}>
+                            <Text style={styles.popUpText}>By name</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleFilter('email')}>
+                            <Text style={styles.popUpText}>By email</Text>
+                        </TouchableOpacity>
+                        </View>
+                )}
             </View>
             <View style={styles.listContainer}>
                 <FlatList
@@ -58,6 +109,48 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "bold",
         color: "#DDDDDD",
+    },
+    actionsContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: 15,
+    },
+    searchContainer: {
+        flex: 1,
+        marginRight: 15,
+    },
+    searchInput: {
+        backgroundColor: "#ffffff",
+        padding: 10,
+        borderRadius: 10,
+        width: "100%",
+    },
+    popUp: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 1,
+        backgroundColor: '#ffffff',
+        padding: 10,
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 2
+    },
+    overlay: {
+        flex: 1,
+        width: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    popUpText: {
+        fontSize: 16,
+        padding: 10,
     },
     listContainer: {
         flex: 1,
