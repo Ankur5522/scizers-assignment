@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from "react";
-import { View, Text, StyleSheet, FlatList, StatusBar, TextInput, TouchableOpacity, TouchableWithoutFeedback} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, FlatList, StatusBar, TextInput, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
 import UserCard from "../components/userCard";
 import User from "../../assets/interface/userInterface";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -8,16 +8,25 @@ const Home = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [originalUsers, setOriginalUsers] = useState<User[]>([]);
     const [showPopUp, setShowPopUp] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchUsers = async () => {
+            try {
             const response = await fetch("https://jsonplaceholder.typicode.com/users");
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
             const data = await response.json();
             Array.from({ length: 10 }, async (_, i) => {
                 data[i].profileImage = `https://i.pravatar.cc/150?img=${i + 1}`;
             });
             setUsers(data);
             setOriginalUsers(data);
+            } catch (error) {
+                setError("Failed to fetch users");
+                console.error("Failed to fetch users:", error);
+            }
         }
         fetchUsers();
     }, [])
@@ -47,6 +56,22 @@ const Home = () => {
         setShowPopUp(() => !showPopUp);
     }
 
+    const ErrorScreen = () => {
+        return (
+            <View style={styles.container}>
+                <View style={{ 
+                    width: "100%", 
+                    alignItems: "center", 
+                    justifyContent: "center", 
+                    marginTop: 10, 
+                    marginHorizontal: "auto" 
+                }}>
+                    <Text style={{fontSize: 17, fontWeight:"bold", color: '#AAAAAA'}}>{error ? error : "No Users"}</Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -65,24 +90,28 @@ const Home = () => {
                     <FontAwesome name="sort" size={24} color="black" />
                 </TouchableWithoutFeedback>
                 {showPopUp && (
-                        <View style={styles.popUp}>
+                    <View style={styles.popUp}>
                         <TouchableOpacity onPress={() => handleFilter('name')}>
-                            <Text style={styles.popUpText}>By name</Text>
+                            <Text style={[styles.popUpText, {borderBottomWidth: 1, borderBottomColor: '#DDDDDD'}]}>By name</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => handleFilter('email')}>
                             <Text style={styles.popUpText}>By email</Text>
                         </TouchableOpacity>
-                        </View>
+                    </View>
                 )}
             </View>
-            <View style={styles.listContainer}>
-                <FlatList
-                    data={users}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => <UserCard user={item} />}
-                    contentContainerStyle={styles.listContent}
-                />
-            </View>
+            {users.length > 0 ? (
+                <View style={styles.listContainer}>
+                    <FlatList
+                        data={users}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => <UserCard user={item} />}
+                        contentContainerStyle={styles.listContent}
+                    />
+                </View>
+            ) : (
+                <ErrorScreen />
+            )}
         </View>
     );
 }

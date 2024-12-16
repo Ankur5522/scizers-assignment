@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import User from '../../assets/interface/userInterface';
 import { useLocalSearchParams } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useNavigation } from '@react-navigation/native';
 
 interface Profile {
     route: {
@@ -14,10 +16,14 @@ interface Profile {
 const Profile: React.FC<Profile> = ({ route }) => {
     const { user } = useLocalSearchParams();
     const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
+    const navigation = useNavigation();
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>
+                <View style={styles.backButtonContainer}> 
+                    <FontAwesome name="arrow-left" size={24} color="#DDDDDD" onPress={() => navigation.goBack()}/>
+                </View>
                 <Text style={styles.headerText}>Profile</Text>
             </View>
             <View style={styles.profileHeader}>
@@ -56,7 +62,13 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         backgroundColor: '#f8f9fa',
     },
+    backButtonContainer: {
+        position: 'absolute',
+        left: 20,
+        zIndex: 1,
+    },
     header: {
+        position: 'relative',
         paddingVertical: 20,
         paddingHorizontal: 15,
         width: "100%",
